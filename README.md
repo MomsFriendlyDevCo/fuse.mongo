@@ -60,6 +60,23 @@ Examples:
 ```
 
 
+TODO
+====
+
+* [x] Examine collections
+* [ ] Use collection stats like est. `doc size * average doc size` as collection size
+* [x] Examine docs
+* [ ] Use collection stats for average doc size as the document size
+* [x] Read doc
+* [ ] Write doc
+* [ ] Create doc (presumably ignore filename and use internal `_id` / create one)
+* [ ] Remove doc
+* [ ] Rename doc (Why?)
+* [ ] Create collection with `mkdir`
+* [ ] Remove collection with `rmdir`
+* [ ] Support for indexes
+
+
 API
 ===
 
