@@ -43,11 +43,9 @@ var fuseMongoose = function(options) {
 			init: fm.init,
 			readdir: (path, cb) => fm.route('readDir', path, {cb, fallback: ()=> []}),
 			getattr: (path, cb) => fm.route('getAttr', path, {cb}),
-			/*
 			open: (path, flags, cb) => fm.route('open', path, {cb}),
-			release: fm.release,
-			read: (path, fd, buf, len, pos, cb) => fm.route('read', path, {cb}),
-			*/
+			read: (path, fd, buf, len, pos, cb) => fm.route('read', path, {cb, req: {fd, buf, len, pos}}),
+			release: (path, fd, cb) => fm.route('release', path, {cb, req: {fd}}),
 		}, {
 			displayFolder: fm.settings.displayFolder,
 			mkdir: fm.settings.mkdir,
@@ -94,6 +92,26 @@ var fuseMongoose = function(options) {
 			cb(e);
 		})
 
+
+	/**
+	* Cache of open file handles
+	* ID is the `${collection}/${id}`
+	* @type {Object}
+	*/
+	fm.fileHandles = {};
+
+
+	/**
+	* Next filehandle position to use
+	* This is so that every file handle will be a unique integer
+	*/
+	fm.nextFileHandle = 1;
+
+
+	/**
+	* Array of routes we should check on each FUSE method hit
+	* @type {Array}
+	*/
 	fm.paths = [
 		/*
 		{ // NOTE: all routes are loaded in this exact order
@@ -119,10 +137,38 @@ var fuseMongoose = function(options) {
 			getAttr: req => Promise.resolve()
 				.then(()=> debug('Get doc stats', req.params.id + '/' + req.params.collection))
 				.then(()=> fm.settings.defaultDocStats()),
+			open: req => Promise.resolve()
+				.then(()=> fm.models[req.params.collection] || Promise.reject(Fuse.ENOENT)) // Collection is valid?
+				.then(()=> req.fileHandle = fm.nextFileHandle++) // Calc file handle ID
+				.then(()=> debug.enabled && debug('Cache doc', req.params.id + '/' + req.params.collection, 'as FH', req.fileHandle))
+				.then(()=> fm.models[req.params.collection].findOne({_id: new mongoose.Types.ObjectId(req.params.id)}))
+				.then(doc => {
+					if (!doc) return Promise.reject(Fuse.ENOENT);
+					fm.fileHandles[req.fileHandle] = JSON.stringify(doc, null, '\t');
+					return req.fileHandle;
+				}),
+			read: req => Promise.resolve()
+				.then(()=> fm.models[req.params.collection] || Promise.reject(Fuse.ENOENT)) // Collection is valid?
+				.then(()=> fm.fileHandles[req.fd] || Promise.reject(Fuse.ENOENT)) // FIXME: Probably a seperate error for trying to read a non-cached file
+				.then(()=> debug.enabled && debug('Read doc', req.params.id + '/' + req.params.collection, 'as FH', req.fd, req.pos, req.len))
+				.then(()=> {
+					// NOTE: FUSE has a weird return style where we have to throw an error (first arg to `cb()`) with zero for done or numeric for bytes read
+					if (req.pos > fm.fileHandles[req.fd].length) return Promise.reject(0); // Read past end
+					var segment = fm.fileHandles[req.fd].slice(req.pos, req.pos + req.len);
+					if (!segment) return Promise.reject(0);
+					req.buf.write(segment);
+					return Promise.reject(segment.length);
+				}),
+			release: req => Promise.resolve()
+				.then(()=> debug('Release', req.params.id + '/' + req.params.collection, 'as FH', req.fd))
+				.then(()=> delete fm.fileHandles[req.fd])
+				.then(()=> { // Released all file handles - reset the counter to save integer space
+					if (fm.fileHandles.length == 0) fm.nextFileHandle = 1;
+				})
 		},
 		{ // Collection directories
 			id: 'collections',
-			re: /^\/(?<collection>.+)$/,
+			re: /^\/(?<collection>[^\/]+)$/,
 			getAttr: req => Promise.resolve()
 				.then(()=> debug('Get collection stats', req.params.collection))
 				.then(()=> fm.settings.defaultCollectionStats()),
@@ -133,7 +179,8 @@ var fuseMongoose = function(options) {
 					var ids = [];
 					fm.models[req.params.collection]
 						.find()
-						.select('_id').lean()
+						.select('_id')
+						.lean()
 						.cursor()
 						.on('data', doc => {
 							if ((ids.length % fm.settings.logFrequency) == 0) debug('Found', ids.length, 'docs');
@@ -153,15 +200,17 @@ var fuseMongoose = function(options) {
 	* @param {Object} [options] Additional options to pass
 	* @param {function} [options.cb] fuse-native callback function if this function is to entirely manage the routing, otherwise the promise response is handed back to the caller
 	* @param {function} [options.fallback] Alternative function to use if the method does not exist within the matched route
+	* @param {Object} [options.req={}] Initial state of the `req` request object
 	* @returns {Promise} A promise which will resolve with the response. If options.cb is present this will be a generic Promise.resolve() / Promise.reject() as the output has already been sent
 	*/
 	fm.route = (method, path, options) => {
 		var settings = {
 			cb: false,
 			fallback: false,
+			req: {},
 			...options,
 		};
-		var req = {};
+		var req = settings.req;
 
 		var found = fm.paths.find(candiate => {
 			var bits = candiate.re.exec(path)
@@ -243,7 +292,7 @@ fuseMongoose.defaults = {
 		mtime: new Date(),
 		atime: new Date(),
 		ctime: new Date(),
-		size: 100,
+		size: 1024*1024*16, //=16mb (maximum size of a Mongo document)
 		mode: 0100000 + 0600, // File + rw
 		uid: process.getuid(),
 		gid: process.getgid()
