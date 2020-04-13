@@ -41,12 +41,12 @@ var fuseMongoose = function(options) {
 		.then(()=> debug('Setup FUSE'))
 		.then(()=> fm.fuse = new Fuse(fm.settings.mount, {
 			init: fm.init,
-			readdir: fm.readDir,
-			getattr: fm.getAttr,
+			readdir: (path, cb) => fm.route('readDir', path, {cb, fallback: ()=> []}),
+			getattr: (path, cb) => fm.route('getAttr', path, {cb}),
 			/*
-			open: fm.open,
+			open: (path, flags, cb) => fm.route('open', path, {cb}),
 			release: fm.release,
-			read: fm.read,
+			read: (path, fd, buf, len, pos, cb) => fm.route('read', path, {cb}),
 			*/
 		}, {
 			displayFolder: fm.settings.displayFolder,
@@ -94,47 +94,54 @@ var fuseMongoose = function(options) {
 			cb(e);
 		})
 
-
-	fm.readDir = (path, cb) => Promise.resolve()
-		.then(()=> debug('readDir', path))
-		.then(()=> fm.route('readDir', path, {cb, fallback: ()=> []}))
-
-	fm.getAttr = (path, cb) => Promise.resolve()
-		.then(()=> debug('getAttr', path))
-		.then(()=> fm.route('getAttr', path, {cb}))
-
-	fm.open = (path, flags, cb) => Promise.resolve()
-		.then(()=> debug('Open', path, flags))
-		.then(()=> cb())
-		.catch(cb)
-
-	fm.read = (path, fd, buf, len, pos, cb) => Promise.resolve()
-		.then(()=> debug('read', path, fd, buf, len, pos))
-		.then(()=> cb())
-		.catch(cb);
-
 	fm.paths = [
 		/*
-		{
+		{ // NOTE: all routes are loaded in this exact order
 			re: RegExp, // Matcher for the path
 			readDir: Function, // ReadDir, returns array of file names
 			getAttr: Function, // Expects stats object response
 		},
 		*/
-		{
-			re: /^\//,
+		{ // Root directory
+			id: 'root',
+			re: /^\/$/,
 			readDir: req => Object.keys(fm.models),
-			getAttr: req => fm.settings.defaultStats(),
+			getAttr: req => fm.settings.defaultRootStats(),
 		},
-		{ // dot files in root - probably nosy processes looking for .Trash
+		{ // Dot files in root - probably nosy processes looking for .Trash
+			id: 'root-dotfiles',
 			re: /^\/\./,
 			getAttr: req => Promise.reject(Fuse.ENOENT),
 		},
-		{
-			re: /^\/(?<collection>.*?)/,
+		{ // Collection contents
+			id: 'collection-docs-by-id',
+			re: /^\/(?<collection>.+?)\/(?<id>.+)\.json$/,
 			getAttr: req => Promise.resolve()
-				.then(()=> debug('get collection stats', req.params.collection))
-				.then(()=> fm.settings.defaultStats()),
+				.then(()=> debug('Get doc stats', req.params.id + '/' + req.params.collection))
+				.then(()=> fm.settings.defaultDocStats()),
+		},
+		{ // Collection directories
+			id: 'collections',
+			re: /^\/(?<collection>.+)$/,
+			getAttr: req => Promise.resolve()
+				.then(()=> debug('Get collection stats', req.params.collection))
+				.then(()=> fm.settings.defaultCollectionStats()),
+			readDir: req => Promise.resolve()
+				.then(()=> fm.models[req.params.collection] || Promise.reject(Fuse.ENOENT)) // Collection is valid?
+				.then(()=> debug('Query collection IDs for', req.params.collection))
+				.then(()=> new Promise((resolve, reject) => {
+					var ids = [];
+					fm.models[req.params.collection]
+						.find()
+						.select('_id').lean()
+						.cursor()
+						.on('data', doc => {
+							if ((ids.length % fm.settings.logFrequency) == 0) debug('Found', ids.length, 'docs');
+							ids.push(fm.settings.docPrefix + doc._id + fm.settings.docSuffix)
+						})
+						.on('end', ()=> resolve(ids))
+						.on('error', reject)
+				}))
 		},
 	];
 
@@ -156,7 +163,6 @@ var fuseMongoose = function(options) {
 		};
 		var req = {};
 
-		debug('findPath', path);
 		var found = fm.paths.find(candiate => {
 			var bits = candiate.re.exec(path)
 			if (bits) {
@@ -174,10 +180,10 @@ var fuseMongoose = function(options) {
 		} else if (found[method]) {
 			promised = Promise.resolve(found[method](req));
 		} else if (settings.fallback) {
-			debug(`No method, "${method}" for path "${path}", use fallback`);
+			debug(`No method, "${method}" for path ID ${found.id} / "${path}", use fallback`);
 			promised = settings.fallback(req);
 		} else {
-			debug(`No method, "${method}" for path "${path}", NO FALLBACK`);
+			debug(`No method, "${method}" for path ID ${found.id} / "${path}", NO FALLBACK`);
 			promised = Promise.reject(Fuse.ENOENT);
 		}
 
@@ -212,12 +218,33 @@ fuseMongoose.defaults = {
 	displayFolder: 'MongoDB',
 	mkdir: true,
 	autoUnmount: true,
-	defaultStats: ()=> ({
+	logFrequency: 1000,
+	docPrefix: '',
+	docSuffix: '.json',
+	defaultRootStats: ()=> ({
 		mtime: new Date(),
 		atime: new Date(),
 		ctime: new Date(),
 		size: 100,
-		mode: 16877,
+		mode: 0040000 + 0600, // Dir + rwx, Use meta flags at https://unix.stackexchange.com/a/39717 + permissions at https://wintelguy.com/permissions-calc.pl
+		uid: process.getuid(),
+		gid: process.getgid()
+	}),
+	defaultCollectionStats: ()=> ({
+		mtime: new Date(),
+		atime: new Date(),
+		ctime: new Date(),
+		size: 100,
+		mode: 0040000 + 0700, // Dir + rwx
+		uid: process.getuid(),
+		gid: process.getgid()
+	}),
+	defaultDocStats: ()=> ({
+		mtime: new Date(),
+		atime: new Date(),
+		ctime: new Date(),
+		size: 100,
+		mode: 0100000 + 0600, // File + rw
 		uid: process.getuid(),
 		gid: process.getgid()
 	}),

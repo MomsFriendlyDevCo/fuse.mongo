@@ -24,3 +24,6 @@ An object containing the following options.
 | `displayFolder` | `string` | `"MongoDB"` | Name / icon on OSX |
 | `mkdir`         | `boolean` | `true` | Attempt to create the mount point automatically if missing |
 | `autoUnmount` | `boolean` | `true` | Automatically unmount the filesystem cleanly when the node process terminates or gets (nicely) killed |
+| `docPrefix` | `string` | `""` | Prefix used when formatting raw document IDs |
+| `docSuffix` |  `string` | `".json"` | Suffix used when formatting raw document IDs |
+| `logFrequency` | `number` | `1000` | How often to output debugging information when pulling large collection contents |
