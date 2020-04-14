@@ -52,6 +52,7 @@ Options:
 Notes:
   * Multiple config options can be provided via `-o opt1=val1,opt2=val2`
   * Options without values are assumed to be `=true` e.g. `-o o1=1,o2,o3`
+  * Some "lazy" Connection URIs automatically corrected into full MongoURI strings: "database" -> "mongodb://localhost/database", "host/database" -> "mongodb://localhost/database"
 
 Examples:
 

@@ -36,6 +36,12 @@ var fuseMongoose = function(options) {
 		// Sanity checks {{{
 		.then(()=> {
 			if (!fm.settings.mount) throw new Error(`Invalid mount path "${fm.settings.mount}"`);
+
+			if (/^[a-z0-9\_]+$/.test(fm.settings.mongoUri)) {
+				fm.settings.mongoUri = 'mongodb://localhost/' + fm.settings.mongoUri;
+			} else if (/^[a-z0-9\_]+\/.*$/.test(fm.settings.mongoUri)) {
+				fm.settings.mongoUri = 'mongodb://' + fm.settings.mongoUri;
+			}
 		})
 		// }}}
 		.then(()=> debug('Setup FUSE'))

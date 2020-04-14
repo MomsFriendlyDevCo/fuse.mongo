@@ -14,6 +14,7 @@ var program = commander
 	.option('-v, --verbose', 'Be verbose, specify multiple times for more verbosity', (t, v) => v + 1, 0)
 	.note('Multiple config options can be provided via `-o opt1=val1,opt2=val2`')
 	.note('Options without values are assumed to be `=true` e.g. `-o o1=1,o2,o3`')
+	.note('Some "lazy" Connection URIs automatically corrected into full MongoURI strings: "database" -> "mongodb://localhost/database", "host/database" -> "mongodb://localhost/database"')
 	.example('fuse.mongoose localhost/test /media/testdb', 'Mount localhost "test" database as /media/testdb')
 	.parse(process.argv)
 
