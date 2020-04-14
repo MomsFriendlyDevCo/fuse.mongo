@@ -1,27 +1,28 @@
 {
-  "name": "@momsfriendlydevco/fuse.mongoose",
+  "name": "@momsfriendlydevco/fuse.mongo",
   "version": "0.0.0",
-  "description": "FUSE filesystem mount for Mongoose / MongoDB databases",
+  "description": "FUSE filesystem mount for MongoDB databases",
   "main": "index.js",
   "bin": {
-    "fuse.mongoose": "./app.js"
+    "fuse.mongo": "./app.js"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/MomsFriendlyDevCo/fuse.mongoose.git"
+    "url": "git+https://github.com/MomsFriendlyDevCo/fuse.mongo.git"
   },
   "keywords": [
     "fuse",
-    "mongoose",
+    "mongo",
     "mongodb",
+    "mongoose",
     "filesystem"
   ],
   "author": "Matt Carter <m@ttcarter.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/MomsFriendlyDevCo/fuse.mongoose/issues"
+    "url": "https://github.com/MomsFriendlyDevCo/fuse.mongo/issues"
   },
-  "homepage": "https://github.com/MomsFriendlyDevCo/fuse.mongoose#readme",
+  "homepage": "https://github.com/MomsFriendlyDevCo/fuse.mongo#readme",
   "engines": {
     "node": ">=12.14.1"
   },

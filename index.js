@@ -1,4 +1,4 @@
-var debug = require('debug')('fuse.mongoose');
+var debug = require('debug')('fuse.mongo');
 var Fuse = require('fuse-native');
 var mongoose = require('mongoose');
 var promisify = require('util').promisify;

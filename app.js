@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 
 var commander = require('commander');
-var debug = require('debug')('fuse.mongoose');
+var debug = require('debug')('fuse.mongo');
 require('commander-extras');
 var FuseMongoose = require('./index');
 
 var program = commander
 	.version(require('./package.json').version)
-	.name('fuse.mongoose')
+	.name('fuse.mongo')
 	.usage('<URI> <mount-point>')
 	.option('-o, --opt <key=val...>', 'CSV of dotted notation config options to populate', (v, t) => t.concat(v.split(/\s*,\s*/)), [])
 	.option('--debug', 'Enable debug mode, automatically detected with shell variable DEBUG')
@@ -15,7 +15,7 @@ var program = commander
 	.note('Multiple config options can be provided via `-o opt1=val1,opt2=val2`')
 	.note('Options without values are assumed to be `=true` e.g. `-o o1=1,o2,o3`')
 	.note('Some "lazy" Connection URIs automatically corrected into full MongoURI strings: "database" -> "mongodb://localhost/database", "host/database" -> "mongodb://localhost/database"')
-	.example('fuse.mongoose localhost/test /media/testdb', 'Mount localhost "test" database as /media/testdb')
+	.example('fuse.mongo localhost/test /media/testdb', 'Mount localhost "test" database as /media/testdb')
 	.parse(process.argv)
 
 /**
@@ -32,7 +32,7 @@ Promise.resolve()
 		if (debug.enabled) {
 			program.debug = true;
 		} else if (program.debug) {
-			require('debug').enable('fuse.mongoose');
+			require('debug').enable('fuse.mongo');
 		}
 
 		program.opt = program.opt.reduce((t, v) => {

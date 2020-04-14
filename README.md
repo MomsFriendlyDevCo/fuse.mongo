@@ -1,13 +1,13 @@
-@MomsFriendlyDevCo/fuse.mongoose
-================================
-FUSE file system mount for Mongoose / MongoDB databases.
+@MomsFriendlyDevCo/fuse.mongo
+=============================
+FUSE file system mount for MongoDB databases.
 
 
 Example
 -------
 
 ```
-> fuse.mongoose localhost/test /media/testdb
+> fuse.mongo localhost/test /media/testdb
 
 > cd /media/testdb
 
@@ -41,20 +41,20 @@ Installation
 Install via NPM in the usual way:
 
 ```
-npm i -g @momsfriendlydevco/fuse.mongoose
+npm i -g @momsfriendlydevco/fuse.mongo
 ```
 
 (You may need a `sudo` prefix depending on your Node setup)
 
 
-The binary should now be installed as `fuse.mongoose`.
+The binary should now be installed as `fuse.mongo`.
 
 
 CLI usage
 ---------
 
 ```
-Usage: fuse.mongoose <URI> <mount-point>
+Usage: fuse.mongo <URI> <mount-point>
 
 Options:
   -V, --version           output the version number
@@ -73,7 +73,7 @@ Notes:
 Examples:
 
   # Mount localhost "test" database as /media/testdb
-  fuse.mongoose localhost/test /media/testdb
+  fuse.mongo localhost/test /media/testdb
 ```
 
 
