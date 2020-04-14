@@ -65,10 +65,15 @@ var fuseMongoose = function(options) {
 		.then(()=> { // Setup autoUnmount
 			if (!fm.settings.autoUnmount) return;
 			process.on('SIGINT', code => {
-				debug('SIGINT detected');
 				debug('Auto umounting due SIGINT');
 				fm.fuse.unmount();
 				process.exit(1);
+			});
+
+			process.on('SIGTERM', code => {
+				debug('Auto umounting due SIGTERM');
+				fm.fuse.unmount();
+				process.exit(0);
 			});
 		})
 

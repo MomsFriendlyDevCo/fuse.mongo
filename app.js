@@ -11,7 +11,7 @@ var program = commander
 	.name('fuse.mongo')
 	.usage('<URI> <mount-point>')
 	.option('-o, --opt <key=val...>', 'CSV of dotted notation config options to populate', (v, t) => t.concat(v.split(/\s*,\s*/)), [])
-	.option('-f, --foreground', 'Run process in foreground (automatically implies --debug)')
+	.option('-f, --foreground', 'Run process in foreground')
 	.option('--debug', 'Enable debug mode, automatically detected with shell variable DEBUG')
 	.option('-v, --verbose', 'Be verbose, specify multiple times for more verbosity', (t, v) => v + 1, 0)
 	.note('Multiple config options can be provided via `-o opt1=val1,opt2=val2`')
