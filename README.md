@@ -3,6 +3,9 @@
 FUSE file system mount for Mongoose / MongoDB databases.
 
 
+Example
+-------
+
 ```
 > fuse.mongoose localhost/test /media/testdb
 
@@ -33,6 +36,18 @@ drwx------ 1 mc mc 100 Apr 13 20:01 widgets/
 }
 ```
 
+Installation
+------------
+Install via NPM in the usual way:
+
+```
+npm i -g @momsfriendlydevco/fuse.mongoose
+```
+
+(You may need a `sudo` prefix depending on your Node setup)
+
+
+The binary should now be installed as `fuse.mongoose`.
 
 
 CLI usage
