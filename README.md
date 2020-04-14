@@ -2,6 +2,12 @@
 =============================
 FUSE file system mount for MongoDB databases.
 
+Adds the `fuse.mongo` tool which connects a local directory to a MongoDB database, representing the database as a file-system on disk.
+
+* Each top level directory represents a MongoDB collection (e.g. `/widgets` represents the widgets collection)
+* Files within those directories are individual Mongo documents (e.g. `/widgets/5d6f2fdb4be85d16430c45ee.json`)
+* Editing those files changes the document in real-time
+
 
 Example
 -------
