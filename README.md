@@ -9,10 +9,11 @@ FUSE file system mount for Mongoose / MongoDB databases.
 > cd /media/testdb
 
 > ls -l
-drwx------ 1 mc mc 100 Apr 13 20:01 locks/
-drwx------ 1 mc mc 100 Apr 13 20:01 logs/
+drwx------ 1 mc mc 100 Apr 13 20:01 doodads/
+drwx------ 1 mc mc 100 Apr 13 20:01 sprockets/
+drwx------ 1 mc mc 100 Apr 13 20:01 widgets/
 
-> cd logs
+> cd widgets
 
 > ls -l
 -rw------- 1 mc mc 16777216 Apr 13 20:01 5d6f2fdb4be85d16430c45ee.json
