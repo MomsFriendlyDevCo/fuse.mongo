@@ -77,11 +77,18 @@ Examples:
 ```
 
 
+Debugging
+---------
+This module uses the [debug NPM module](https://github.com/visionmedia/debug) for debugging. To enable set the environment variable to `DEBUG=fuse.mongo`.
+
+
 TODO
 ====
 
 * [x] Examine collections
+* [ ] Collection filtering via options
 * [ ] Use collection stats like est. `doc size * average doc size` as collection size
+* [ ] View support - specify a query to view the results
 * [x] Examine docs
 * [ ] Use collection stats for average doc size as the document size
 * [x] Read doc
