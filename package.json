@@ -3,8 +3,8 @@
   "version": "0.0.0",
   "description": "FUSE filesystem mount for Mongoose / MongoDB databases",
   "main": "index.js",
-  "scripts": {
-    "test": "mocha"
+  "bin": {
+    "fuse.mongoose": "./app.js"
   },
   "repository": {
     "type": "git",
@@ -22,6 +22,9 @@
     "url": "https://github.com/MomsFriendlyDevCo/fuse.mongoose/issues"
   },
   "homepage": "https://github.com/MomsFriendlyDevCo/fuse.mongoose#readme",
+  "engines": {
+    "node": ">=12.14.1"
+  },
   "dependencies": {
     "commander": "^5.0.0",
     "commander-extras": "^1.1.0",
